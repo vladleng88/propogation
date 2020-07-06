@@ -1,8 +1,5 @@
 	Altitude       Sound speed  Wind velocity(x)  Wind velocity(y)  Density
-	(m)		(m/s)		(m/s)		(m/s)		(kg/m3)
-
-
-
+	   (m)	          (m/s)		    (m/s)		       (m/s)		(kg/m3)
 
 	--------       -----------  ----------------  ----------------	-------@
 	0.0		340.294		0.0		0.0		1.225

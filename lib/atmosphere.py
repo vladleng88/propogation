@@ -30,6 +30,7 @@ class Atmosphere:
         # position = int(file.read().find('@'))
         # print(position)
         # file.seek(position)
+        print(self.__path)
         for line in file:
             if line[len(line)-2] == '@':
                 break
