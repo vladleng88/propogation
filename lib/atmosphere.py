@@ -21,9 +21,7 @@ class Atmosphere:
     def setAtmoshere(self):
         file = open(self.__path, 'r', encoding='utf-8')
         # position = int(file.read().find('@'))
-        # print(position)
         # file.seek(position)
-        print(self.__path)
         for line in file:
             if line[len(line)-2] == '@':
                 break
@@ -38,7 +36,6 @@ class Atmosphere:
             self.__d[count] = float(list[5])
             count += 1
             self.__entries += 1
-            # print(list)
         self.__setSTemperature()
         self.__setSDensity()
         self.__setSWindX()
@@ -48,7 +45,6 @@ class Atmosphere:
 
     def __setSTemperature(self):
         spline_coeff = self.spline_fit(self.__H, self.__T)
-        print('test')
         self.__sT = spline_coeff['spline']
         spline_coeff.pop('spline')
         self.__coeff_T = spline_coeff
@@ -150,7 +146,6 @@ class Atmosphere:
         y_i0 = {}
         h_i1 = {}
         y_i1 = {}
-        print('--------')
         for i in range(2, len(h)):
             dh_l = (h[i]-h[i-1])/self.__spline_d
             dh_r = (h[i+1]-h[i])/self.__spline_d
@@ -224,13 +219,12 @@ class Atmosphere:
         spline_return['b'] = coeff_b
         return spline_return
 
-    def getTemprature(self, h):
+    def getTemperature(self, h):
         if h < 0 or h > self.__getHmax():
             exit('Error: Измерения за гранью температурного профиля')
         for key in self.__sH:
             if h >= self.__sH[key] and h < self.__sH[key+1]:
                 b = self.__sH[key]
-                #print('key', key)
                 a0 = self.__coeff_T['a0'][key]
                 a1 = self.__coeff_T['a1'][key]
                 a2 = self.__coeff_T['a2'][key]
@@ -244,7 +238,6 @@ class Atmosphere:
         for key in self.__sH:
             if h >= self.__sH[key] and h < self.__sH[key+1]:
                 b = self.__sH[key]
-                # print('key', key)
                 a0 = self.__coeff_Vx['a0'][key]
                 a1 = self.__coeff_Vx['a1'][key]
                 a2 = self.__coeff_Vx['a2'][key]
@@ -258,7 +251,6 @@ class Atmosphere:
         for key in self.__sH:
             if h >= self.__sH[key] and h < self.__sH[key+1]:
                 b = self.__sH[key]
-                # print('key', key)
                 a0 = self.__coeff_Vy['a0'][key]
                 a1 = self.__coeff_Vy['a1'][key]
                 a2 = self.__coeff_Vy['a2'][key]
@@ -271,7 +263,6 @@ class Atmosphere:
         for key in self.__sH:
             if h >= self.__sH[key] and h < self.__sH[key+1]:
                 b = self.__sH[key]
-                # print('key', key)
                 a0 = self.__coeff_Vz['a0'][key]
                 a1 = self.__coeff_Vz['a1'][key]
                 a2 = self.__coeff_Vz['a2'][key]
@@ -285,7 +276,6 @@ class Atmosphere:
         for key in self.__sH:
             if h >= self.__sH[key] and h < self.__sH[key+1]:
                 b = self.__sH[key]
-                # print('key', key)
                 a0 = self.__coeff_d['a0'][key]
                 a1 = self.__coeff_d['a1'][key]
                 a2 = self.__coeff_d['a2'][key]
