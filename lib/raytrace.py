@@ -55,6 +55,7 @@ class Raytrace:
         c0 = (1 - noy ** 2) * (self.__atmosphere.getWindY(y)) ** 2 + a_star ** 2
         c1 = 2 * (1 - noy ** 2) * (self.__atmosphere.getWindY(y)) * a
         c2 = (1 - noy ** 2) * (a) ** 2 - a_star ** 2
+        #print('y=', y, 'd=', c1 ** 2 - 4 * c0 * c2)
         d = sqrt(c1 ** 2 - 4 * c0 * c2)
         ny1 = (-1 * c1 + d) / (2 * c0)
         ny2 = (-1 * c1 - d) / (2 * c0)
@@ -165,8 +166,11 @@ class Raytrace:
         # коэффициент u = Vy + a*ny
         u = self.__atmosphere.getWindY(y) + self.soundSpeed(T)*ny
         # коэффициент K = Un/Un0 = (a+Vy*ny)/a_star
-        K = a + (self.__atmosphere.getWindY(y) * ny)/a_star
-        dI1 = (a0*(1+(K**2)*((l0x*dWindX+l0z*dWindZ)**2)/(u**2))*a*K/u)*dy
+        K = (a + self.__atmosphere.getWindY(y) * ny)/a_star
+        #dI1 = (a0*(1+(K**2)*((l0x*dWindX+l0z*dWindZ)**2)/(u**2))*a*K/u)*dy
+        dI1 = (a0*a*K/u)*dy
+        #print('dI1', (a0*(1+(K**2)*((l0x*dWindX+l0z*dWindZ)**2)/(u**2))*a*K/u))
+
         dI2 = ((a0**3)*a*(K**3)/(u**3))*dy
         dI3 = ((a0**2)*a*(l0x*dWindX+l0z*dWindZ)*K/(u**3))*dy
         dI = {}
@@ -198,8 +202,9 @@ class Raytrace:
         u = self.__atmosphere.getWindY(y) + self.soundSpeed(self.__atmosphere.getTemperature(y)) * ny
         # коэффициент K = Un/Un0 = (a+Vy*ny)/a_star
         a_star = a0 + self.__atmosphere.getWindY(self.__params.getY0()) * noy - (dWindX * nox + dWindZ * noz)
-        K = a + (self.__atmosphere.getWindY(y) * ny) / a_star
-        dI4 = sqrt(a/(density*(K**3)*fabs((u**3)*I)))*dy
+        K = (a + self.__atmosphere.getWindY(y) * ny) / a_star
+        dI4 = sqrt(a/(density*(K**3)*fabs((u**3)*I)))*fabs(dy)
+        #dI4 = (a0*sqrt(a0))/(a**2 * sqrt(a*density*fabs(ny*I))) * dy/ny
         return dI4
 
     def getK(self, I4):
@@ -211,7 +216,8 @@ class Raytrace:
         l = self.__params.getLength()
         a0 = self.soundSpeed(self.__atmosphere.getTemperature(self.__params.getY0()))
         density0 = self.__atmosphere.getDensity(self.__params.getY0())
-        k = 0.5 * (kappa+1) * M**1.5 * I4 * sqrt((sigma**2+(1-sigma**2)*noy**2)/(fabs(noy)*a0*density0))*Y/(pi*sqrt(l**5))
+        k = 0.5*(kappa+1) * M**1.5 * I4 * sqrt((sigma**2+(1-sigma**2)*noy**2)/(fabs(noy)*a0*density0))*Y/(pi*sqrt(2*l**5))
+        #k = 0.5 * (kappa+1) * I4 * sqrt((sigma**2+(1-sigma**2)*noy**2)/(fabs(noy)*a0*density0))/(pi*sqrt(2))
         return k
 
     def getK1(self, y00, I, ny_prev):
@@ -232,7 +238,7 @@ class Raytrace:
         dWindZ = self.__atmosphere.getWindZ(y00) - self.__atmosphere.getWindZ(self.__params.getY0())
         # коэффициент K = Un/Un0 = (a+Vy*ny)/a_star
         a_star = a0 + self.__atmosphere.getWindY(self.__params.getY0()) * noy - (dWindX * nox + dWindZ * noz)
-        K = a00 + (self.__atmosphere.getWindY(y00) * ny) / a_star
+        K = (a00 + self.__atmosphere.getWindY(y00) * ny) / a_star
         # коэффициент u = Vy + a*ny
         u00 = self.__atmosphere.getWindY(y00) + self.soundSpeed(self.__atmosphere.getTemperature(y00)) * ny
         K1 = (1/pi)*sqrt(M)*sqrt(((density00*a00**3)/(2*a0*density0*K))*((sigma**2+(1-sigma**2)*noy**2)/(fabs(noy*u00*I))))*(Y/sqrt(l**3))
@@ -256,8 +262,8 @@ class Raytrace:
         # коэффициент u = Vy + a*ny
         u0 = self.__atmosphere.getWindY(self.__params.getY0()) + a0 * noy
         dy = (self.__atmosphere.getWindY(self.__params.getY0()) + a0 * noy)*self.getDt()/10
-        I1_0 = (dy * a0**2)/(u0**2)
-        I2_0 = ((a0**4)/(u0**3))*dy
+        I1_0 = (a0**2)/(u0**2) * fabs(dy)
+        I2_0 = ((a0**4)/(u0**3))*fabs(dy)
         I3_0 = 0
         I4_0 = 2*sqrt((dy*fabs(noy))/(density0 * u0 * a0**2 * (sigma**2+(1-sigma**2)*noy**2)))
         I0 = {}

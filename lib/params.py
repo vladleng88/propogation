@@ -2,18 +2,19 @@ from math import *
 
 class Params:
 
-    def __init__(self, y0=15000,
+    def __init__(self, y0=15500,#метров
                  x0=0,
                  z0=0,
                  t0=0,
                  omega=0,
                  omega1=0,
-                 M0=1.5,
+                 M0=1.7,
                  kappa=1.4,
                  R=287.3,
-                 lift=15000*9.81,
-                 length=30.346,
-                 y_target=0
+                 lift=15000*9.81,# N
+                 length=30.346, #метров
+                 y_target=0,
+                 ispace=4000
                  ):
         self.__y0 = y0
         self.__x0 = x0
@@ -27,6 +28,7 @@ class Params:
         self.__lift = lift
         self.__length = length
         self.__y_target = y_target
+        self.__ispace = ispace
 
     def getMachNumber0(self):
         return self.__M0
@@ -87,3 +89,8 @@ class Params:
         return self.__y_target
     def setYtarget(self, y_target):
         self.__y_target = y_target
+
+    def getIspace(self):
+        return self.__ispace
+    def setIspace(self, ispace):
+        self.__ispace = ispace
