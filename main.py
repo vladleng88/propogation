@@ -7,16 +7,14 @@ from mpl_toolkits.mplot3d import Axes3D
 from math import *
 
 atmosphere = Atmosphere()
-for
+
 params = Params()
 atmosphere.setAtmoshere()
 raytrace = Raytrace(0, params, atmosphere)
 aerodynamics = Aerodynamics(params, raytrace.getFlightMachNumber())
 coeff_normal = 0.5*atmosphere.getDensity(params.getY0())*(raytrace.getFlightMachNumber()**2)*\
     (raytrace.soundSpeed(atmosphere.getTemperature(params.getY0())))**2*sqrt(params.getLength())/\
-    (sqrt((raytrace.getFlightMachNumber())**2 - 1)*params.getLift())
-print(sqrt((raytrace.getFlightMachNumber())**2 - 1))
-print('coeff_normal=', coeff_normal)
+    (sqrt((raytrace.getFlightMachNumber())**2 - 1)*params.getLift()print('coeff_normal=', coeff_normal)
 aerodynamics.setAerodynmamicsData(coeff_normal)
 ettaRef = aerodynamics.getEttaRef()
 withemRef = aerodynamics.getWithemRef()
