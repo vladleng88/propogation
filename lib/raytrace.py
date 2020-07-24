@@ -5,7 +5,7 @@ from lib.params import Params
 
 class Raytrace:
 
-    def __init__(self, tetta, params: Params, atmosphere: Atmosphere):
+    def __init__(self, tetta, params: Params, atmosphere: Atmosphere, a, dadh: dict, dVdh: dict):
         self.__tetta = tetta
         self.__params = params
         self.__atmosphere = atmosphere
@@ -13,6 +13,9 @@ class Raytrace:
         self.__noy = self.__noy_definition()
         self.__noz = self.__noz_definition()
         self.__dt = 0.05
+        self.__a = a
+        self.__dadh = dadh
+        self.__dVdh = dVdh
 
     def __nox_definition(self):
         omega = self.__params.getOmega()
@@ -74,12 +77,39 @@ class Raytrace:
     def getSigma(self):
         noy = self.getNoy()
         omega = radians(self.__params.getOmega())
-        myu = self.getMyu()
+        myu = radians(self.getMyu())
         sigma = (cos(myu)*sin(omega)+sin(myu)*cos(omega)*cos(radians(self.__tetta)))/(fabs(cos(myu)*sin(omega)+sin(myu)*cos(omega)*cos(radians(self.__tetta)))) * \
                 (noy/sqrt(1-noy**2)) * (cos(omega)*sin(radians(self.__tetta)))/sqrt(1-(cos(omega))**2*(sin(radians(self.__tetta)))**2)
         return sigma
     def getGamma(self):
-        return 0
+        noy = self.getNoy()
+        nox = self.getNox()
+        noz = self.getNoz()
+        #print('---------gammatest')
+        #print('nox=', nox, 'noy=', noy, 'noz=', noz)
+        a0=self.soundSpeed(self.__atmosphere.getTemperature(self.__params.getY0()))
+        #print('a0=', a0)
+        myu = radians(self.getMyu())
+        #print('myu_grad', self.getMyu())
+        omega = radians(self.__params.getOmega())
+        tetta = radians(self.__tetta)
+        #print('myu=', myu, 'omega=', omega, 'tetta=', tetta)
+        u0 = self.__atmosphere.getWindY(self.__params.getY0()) + a0 * noy
+        #print('u0=', u0)
+        ax = self.__a['ax']
+        ay = self.__a['ay']
+        az = self.__a['az']
+        #print('ax=', ax, 'ay=', ay,'az=', az )
+        noa = nox*ax + noy*ay + noz*az
+        #print('noa', noa)
+        dadh = sqrt((self.__dadh['dadhx'])**2+(self.__dadh['dadhy'])**2+(self.__dadh['dadhz'])**2)
+        #print('dadh', dadh, '2=', nox*self.__dVdh['dVdhx']*noy*self.__dVdh['dVdhy']*noz*self.__dVdh['dVdhz'])
+        #print('tan', (tan(myu))**2)
+        #print('tan2', (sin(myu)/cos(myu))**2)
+        gamma = (noy**2*(tan(myu))**2) * (noa*((u0)/(a0*noy)) - (a0*(sin(omega))**2)*(dadh+nox*self.__dVdh['dVdhx']*noy*self.__dVdh['dVdhy']*noz*self.__dVdh['dVdhz'])/(noy*(sin(myu))**2)) / (a0**2*(1-(cos(omega)*sin(tetta))**2))
+        #print('---------End gammatest')
+
+        return gamma
 
     def getNox(self):
         return self.__nox
@@ -168,7 +198,7 @@ class Raytrace:
         # коэффициент K = Un/Un0 = (a+Vy*ny)/a_star
         K = (a + self.__atmosphere.getWindY(y) * ny)/a_star
         #dI1 = (a0*(1+(K**2)*((l0x*dWindX+l0z*dWindZ)**2)/(u**2))*a*K/u)*dy
-        dI1 = (a0*a*K/u)*dy
+        dI1 = (a0*a*K/u)*(1+(l0x*dWindX+l0z*dWindZ)**2*K**2/u**2)*dy
         #print('dI1', (a0*(1+(K**2)*((l0x*dWindX+l0z*dWindZ)**2)/(u**2))*a*K/u))
 
         dI2 = ((a0**3)*a*(K**3)/(u**3))*dy

@@ -11,15 +11,11 @@ from lib.praphview import *
 atmosphere = Atmosphere()
 atmosphere.setAtmoshere()
 
-pathway = Pathway(atmosphere, 15500, 10, 0, 0, 1.2, 1.4, 0, 0, 10)
-pathway.setStritelinePathway()
-
-tau = pathway.getTime()
-for tt in list(tau.values()):
-
-
-params = Params()
-raytrace = Raytrace(0, params, atmosphere)
+params = Params(15500, 0, 0, 0, 0, 0, 1.7)
+a = {'ax': 0, 'ay': 0, 'az': 0}
+dVdh = {'dVdhx': 0, 'dVdhy': 0, 'dVdhz': 0}
+dadh = {'dadhx': 0, 'dadhy': 0, 'dadhz': 0}
+raytrace = Raytrace(50, params, atmosphere, a, dadh, dVdh)
 aerodynamics = Aerodynamics(params, raytrace.getFlightMachNumber())
 coeff_normal = 0.5*atmosphere.getDensity(params.getY0())*(raytrace.getFlightMachNumber()**2)*\
     (raytrace.soundSpeed(atmosphere.getTemperature(params.getY0())))**2*sqrt(params.getLength())/\
@@ -86,23 +82,29 @@ while y >= params.getYtarget() and y_next >= params.getYtarget():
         t = t + dt_final
         xx.append(x)
         zz.append(z)
-        yy.append(params.getYtarget())
+        yy.append(y)
+    print('x=', x, 'y=', y, 'z=', z)
     Integrals = raytrace.getDIntegrals(y, ny, dy)
     I1 = I1 + Integrals['dI1']
     I2 = I2 + Integrals['dI2']
     I3 = I3 + Integrals['dI3']
     I = raytrace.getIntegral(I1, I2, I3)
     I4 = I4 + raytrace.getDIntegral4(y, ny, I, dy)
-    k = raytrace.getK(I4)
-    k1 = raytrace.getK1(params.getYtarget(), I, ny)
-    k2 = raytrace.getK2()
+    #k = raytrace.getK(I4)
+    #k1 = raytrace.getK1(params.getYtarget(), I, ny)
+    #k2 = raytrace.getK2()
     ny = raytrace.n_definition(y, ny)['ny']
 
+    #print('h=', y, 'I1=', I1,'I2=', I2,'I3=', I3,'I4=', I4, 'I', I)
     #print('h=', y, ' k=', k, ' k1=', k1, ' k2=', k2, 'I1=', I1,'I2=', I2,'I3=', I3,'I4=', I4, 'I', I)
     #i1_test += (raytrace.soundSpeed(atmosphere.getTemperature(y)))*dy/ny
     #print('h=', y, ' k=', k, ' k1=', k1, ' k2=', k2, 'I1=', I1, 'ny', ny, 'a', raytrace.soundSpeed(atmosphere.getTemperature(y)), 'i1_test', i1_test)
+k = raytrace.getK(I4)
+k1 = raytrace.getK1(params.getYtarget(), I, ny)
+k2 = raytrace.getK2()
 print(' k=', k, ' k1=', k1, ' k2=', k2, )
 print('sigma', raytrace.getSigma())
+print('gamma', raytrace.getGamma())
 for j in range(0, len(withemRef)):
    FF_DOP[j] = 2*potentialRef[j]/k - withemRef[j]**2
    T_DOP[j] = ettaRef[j] - k*withemRef[j]
@@ -168,5 +170,7 @@ for j in range(0, len(F_wave)):
     P_BOOM[j] = k1*F_wave[j]*2
     T_BOOM[j] = k2*(ttt[j])
     #print('j',j ,'\t', 'etta=', ettaRef[j], '\t','t=', T_BOOM[j], '\t','p=', P_BOOM[j])
-#graphPlot(ettaRef, dSdX, potentialRef, withemRef, T_BOOM, P_BOOM,  T_DOP, FF_DOP, ttt, FFF)
-
+print(zz)
+graphPlot(ettaRef, dSdX, potentialRef, withemRef, T_BOOM, P_BOOM,  T_DOP, FF_DOP, ttt, FFF, i=1)
+#flatPathPlot(xx, yy, zz)
+spacedPathPlot(xx, yy, zz)

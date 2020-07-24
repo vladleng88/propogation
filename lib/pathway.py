@@ -15,7 +15,7 @@ class Pathway:
                  omega1=0,
                  kappa=1.4,
                  R=287.3,
-                 dt=0.05
+                 dt=0.1
                  ):
         self.__y0 = y0
         self.__x0 = x0
@@ -35,6 +35,12 @@ class Pathway:
         self.__y = {}
         self.__z = {}
         self.__V = {}
+        self.__ax = {}
+        self.__ay = {}
+        self.__az = {}
+        self.__dadh = {}
+        self.__dVdh = {}
+
 
     def setStritelinePathway(self):
         V = {}
@@ -57,8 +63,14 @@ class Pathway:
         y[0] = self.__y0
         z[0] = self.__z0
         t[0] = self.__t0
+        self.__ax[0] = 0
+        self.__ay[0] = 0
+        self.__az[0] = 0
+        self.__dadh[0] = {'dadhx':0, 'dadhy':0, 'dadhz':0}
+        self.__dVdh[0] = {'dVdhx':0, 'dVdhy':0, 'dVdhz':0}
         mach = V[0] / self.soundSpeed(T0)
         i=1
+        #print('mach',mach)
         while mach < self.__M1:
             V[i] = V[i-1] + self.__acceleration*self.__dt
             Vx[i] = V[i] * cos(radians(self.__omega)) * cos(radians(self.__omega1))
@@ -66,29 +78,54 @@ class Pathway:
             Vz[i] = V[i] * cos(radians(self.__omega)) * sin(radians(self.__omega1))
             #print('Vz', Vz[i])
             Vy[i] = V[i] * sin(radians(self.__omega))
-            ax = (Vx[i] + Vx[i-1])/self.__dt
-            ay = (Vy[i] + Vy[i-1])/self.__dt
-            az = (Vz[i] + Vz[i-1])/self.__dt
-            x[i] = x[i-1] + Vx[i-1]*self.__dt + 0.5*ax*(self.__dt)**2
-            y[i] = y[i-1] + Vy[i-1]*self.__dt + 0.5*ay*(self.__dt)**2
-            z[i] = z[i-1] + Vz[i-1]*self.__dt + 0.5*az*(self.__dt)**2
+            self.__ax[i] = (Vx[i] - Vx[i-1])/self.__dt
+            self.__ay[i] = (Vy[i] - Vy[i-1])/self.__dt
+            self.__az[i] = (Vz[i] - Vz[i-1])/self.__dt
+            x[i] = x[i-1] + Vx[i-1]*self.__dt + 0.5*self.__ax[i]*(self.__dt)**2
+            y[i] = y[i-1] + Vy[i-1]*self.__dt + 0.5*self.__ay[i]*(self.__dt)**2
+            z[i] = z[i-1] + Vz[i-1]*self.__dt + 0.5*self.__az[i]*(self.__dt)**2
             t[i] = t[i-1] + self.__dt
+            if y[i] != y[i - 1]:
+                dVdhx = (Vx[i] - Vx[i - 1]) / (y[i] - y[i - 1])
+                dVdhy = (Vy[i] - Vy[i - 1]) / (y[i] - y[i - 1])
+                dVdhz = (Vz[i] - Vz[i - 1]) / (y[i] - y[i - 1])
+                dadhx = (self.__ax[i] - self.__ax[i-1]) / (y[i] - y[i - 1])
+                dadhy = (self.__ay[i] - self.__ay[i-1]) / (y[i] - y[i - 1])
+                dadhz = (self.__az[i] - self.__az[i-1]) / (y[i] - y[i - 1])
+            else:
+                dVdhx = 0
+                dVdhy = 0
+                dVdhz = 0
+                dadhx = 0
+                dadhy = 0
+                dadhz = 0
+            self.__dVdh[i] = {'dVdhx': dVdhx, 'dVdhy': dVdhy, 'dVdhz': dVdhz}
+            self.__dadh[i] = {'dadhx': dadhx, 'dadhy': dadhy, 'dadhz': dadhz}
             temperature = self.__atmosphere.getTemperature(y[i])
             mach = V[i] / self.soundSpeed(temperature)
-            #print('z', z[i])
+            #print('mach_next',mach)
             if mach < self.__M1:
                 i+=1
             else:
-
                 dMdt = ((V[i]/self.__atmosphere.getTemperature(y[i])) - (V[i-1]/self.__atmosphere.getTemperature(y[i-1])))/(t[i]-t[i-1])
                 t_final = t[i-1]+(self.__M1-(V[i-1]/self.soundSpeed(self.__atmosphere.getTemperature(y[i-1]))))/(dMdt)
-                print('1', self.__M1)
-                print('2', V[i-1]/self.__atmosphere.getTemperature(y[i-1]))
                 print('t_final', t_final)
                 y[i] = y[i-1] + ((y[i] - y[i - 1])/(t[i] - t[i - 1]))*(t_final - t[i-1])
                 x[i] = x[i-1] + ((x[i] - x[i - 1])/(t[i] - t[i - 1]))*(t_final - t[i-1])
                 z[i] = z[i-1] + ((z[i] - z[i - 1])/(t[i] - t[i - 1]))*(t_final - t[i-1])
                 V[i] = self.__M1 * self.soundSpeed(self.__atmosphere.getTemperature(y[i]))
+                self.__dadh[i] = {'dadhx':0, 'dadhy':0, 'dadhz':0}
+                if y[i] != y[i - 1]:
+                    dVdhx = (V[i] - V[i - 1]) * (cos(radians(self.__omega)) * cos(radians(self.__omega1))) / (y[i] - y[i - 1])
+                    dVdhy = (V[i] - V[i - 1]) * (sin(radians(self.__omega))) / (y[i] - y[i - 1])
+                    dVdhz = (V[i] - V[i - 1]) * (cos(radians(self.__omega)) * sin(radians(self.__omega1))) / (y[i] - y[i - 1])
+
+                else:
+                    dVdhx = 0
+                    dVdhy = 0
+                    dVdhz = 0
+
+                self.__dVdh[i] = {'dVdhx': dVdhx, 'dVdhy': dVdhy, 'dVdhz': dVdhz}
                 mach = self.__M1
         self.__t = t
         self.__x = x
@@ -174,3 +211,29 @@ class Pathway:
     def getVelocity(self):
         return self.__V
 
+    def getOmega(self):
+        return self.__omega
+
+    def setOmega(self, omega):
+        self.__omega = omega
+
+    def getOmega1(self):
+        return self.__omega1
+
+    def setOmega1(self, omega1):
+        self.__omega1 = omega1
+
+    def getAx(self):
+        return self.__ax
+
+    def getAy(self):
+        return self.__ay
+
+    def getAz(self):
+        return self.__az
+
+    def getDaDh(self):
+        return self.__dadh
+
+    def getDVDh(self):
+        return self.__dVdh
