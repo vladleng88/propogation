@@ -15,7 +15,7 @@ class Pathway:
                  omega1=0,
                  kappa=1.4,
                  R=287.3,
-                 dt=0.1
+                 dt=0.5
                  ):
         self.__y0 = y0
         self.__x0 = x0

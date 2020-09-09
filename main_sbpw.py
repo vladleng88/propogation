@@ -2,6 +2,7 @@ from lib.atmosphere import Atmosphere
 from lib.params import Params
 from lib.raytrace import Raytrace
 from lib.aerodynamics import Aerodynamics
+from lib.aerodynamics_sbpw import AerodynamicsSBPW
 from lib.pathway import Pathway
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -11,13 +12,17 @@ from lib.praphview import *
 atmosphere = Atmosphere(r'in/sbpw_atm/air.dat')
 atmosphere.setAtmoshere()
 
+#-------------Enter tetta angle------------------
+tetta = 70
+#-------------End tetta angle------------------
+
 #windPathPlot(list(atmosphere.getDefaultHeight().values()), list(atmosphere.getDefaultWindX().values()), list(atmosphere.getDefaultWindY().values()), list(atmosphere.getDefaultWindZ().values()))
-params = Params(16459.2, 0, 0, 0, 0, 0, 1.7, 110.011306632)
+params = Params(16459.2-82.296, 0, 0, 0, 0, 0, 1.4, 110.011306632, 91625, 27.432)
 a = {'ax': 0, 'ay': 0, 'az': 0}
 dVdh = {'dVdhx': 0, 'dVdhy': 0, 'dVdhz': 0}
 dadh = {'dadhx': 0, 'dadhy': 0, 'dadhz': 0}
-raytrace = Raytrace(0, params, atmosphere, a, dadh, dVdh)
-aerodynamics = Aerodynamics(params, raytrace.getFlightMachNumber())
+raytrace = Raytrace(tetta, params, atmosphere, a, dadh, dVdh)
+aerodynamics = AerodynamicsSBPW(params, raytrace.getFlightMachNumber(), r'in/sbpw_atm/case2_'+str(tetta)+'.txt')
 coeff_normal = 0.5*atmosphere.getDensity(params.getY0())*(raytrace.getFlightMachNumber()**2)*\
     (raytrace.soundSpeed(atmosphere.getTemperature(params.getY0())))**2*sqrt(params.getLength())/\
     (sqrt((raytrace.getFlightMachNumber())**2 - 1)*params.getLift())
@@ -28,6 +33,8 @@ ettaRef = aerodynamics.getEttaRef()
 withemRef = aerodynamics.getWithemRef()
 potentialRef = aerodynamics.getPotentalRef()
 dSdX = aerodynamics.getdSdX()
+print('ettaRef', len(ettaRef))
+print('dSdX', len(dSdX))
 
 P_BANG = {}; T_BANG = {}
 FF_DOP = {}; T_DOP = {}
@@ -104,6 +111,7 @@ k = raytrace.getK(I4)
 k1 = raytrace.getK1(params.getYtarget(), I, ny)
 k2 = raytrace.getK2()
 print(' k=', k, ' k1=', k1, ' k2=', k2, )
+print('l=',params.getLength(), 'a0=', raytrace.soundSpeed(atmosphere.getTemperature(16459.2-82.296)), 'M=', raytrace.getFlightMachNumber())
 print('sigma', raytrace.getSigma())
 print('gamma', raytrace.getGamma())
 for j in range(0, len(withemRef)):
@@ -156,7 +164,7 @@ counter = 0
 #        FF_wave[tt] = 0
 #counter = 0
 for tt in TT:
-    if tt>=t_start and tt<2.1:
+    if tt>=t_start and tt<2.7:
         FFF[counter] = FF_wave[tt]
         ttt[counter] = tt
         counter+=1
@@ -171,9 +179,14 @@ for j in range(0, len(F_wave)):
     P_BOOM[j] = k1*F_wave[j]*1.9
     T_BOOM[j] = k2*(ttt[j])
     #print('j',j ,'\t', 'etta=', ettaRef[j], '\t','t=', T_BOOM[j], '\t','p=', P_BOOM[j])
-print(zz)
-graphPlot(ettaRef, dSdX, potentialRef, withemRef, T_BOOM, P_BOOM,  T_DOP, FF_DOP, ttt, FFF, i=1)
+print('len_TBoom', len(T_BOOM))
+print('len_PBoom', len(P_BOOM))
+graphPlot(ettaRef, dSdX, potentialRef, withemRef, T_BOOM, P_BOOM,  T_DOP, FF_DOP, ttt, FFF, raytrace.getTetta())
+#graphPlotSBPW(ettaRef,dSdX, withemRef, T_BOOM, P_BOOM,  T_DOP, FF_DOP, ttt, FFF, i=1)
 #flatPathPlot(xx, yy, zz)
 #windPathPlot(atmosphere.getDefaultWindX(), atmosphere.getDefaultWindY(), atmosphere.getDefaultWindZ())
-spacedPathPlot(xx, yy, zz)
+spacedPathPlot(xx, yy, zz, raytrace.getTetta())
+res = open(r'res/res_sbpw_'+str(raytrace.getTetta())+'.txt', 'w', encoding='utf-8' )
+for i in range(0, len(T_BOOM)):
+    res.write('\t'+str(list(T_BOOM.values())[i])+'\t'+str(list(P_BOOM.values())[i])+'\n')
 

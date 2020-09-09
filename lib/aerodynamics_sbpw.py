@@ -1,9 +1,9 @@
 from lib.params import Params
 from math import *
 
-class Aerodynamics:
+class AerodynamicsSBPW:
 
-    def __init__(self, params: Params, MachNumber, path=r'in/p.txt', Ngeoam = 2500):
+    def __init__(self, params: Params, MachNumber, path=r'in/sbpw_atm/case2_0.txt', Ngeoam = 4048):
         self.__path = path
         self.__withemRef = {}
         self.__dSdX = {}
@@ -26,12 +26,15 @@ class Aerodynamics:
         self.__potentialRef[0] = 0
         self.__withemRef[0] = 0
 
+        betta = sqrt(self.__MachNumber ** 2 - 1)
+        r = 82.296
+
         for i in range(1, len(self.__dSdX)):
             potential_integral = 0
             for j in range(0, i):
-                if self.__ettaRef[j]>2.5:
+                if self.__ettaRef[j]>3:
                     continue
-                potential_loc = sqrt(self.__params.getLength())*0.5*(self.__dSdX[j]+self.__dSdX[j+1])*(self.__ettaRef[j+1] - self.__ettaRef[j])/(sqrt(self.__ettaRef[i] - self.__ettaRef[j]))
+                potential_loc = pi*sqrt(2*betta*r)*0.5*(self.__dSdX[j]+self.__dSdX[j+1])*(self.__ettaRef[j+1] - self.__ettaRef[j])*self.__params.getLength()
                 potential_integral = potential_integral + potential_loc
             self.__potentialRef[i] =k111*potential_integral
 
@@ -44,6 +47,10 @@ class Aerodynamics:
             else:
                 self.__withemRef[i] = withem_loc
         self.__withemRef[len(self.__dSdX)-1] = 0
+       # betta = sqrt(self.__MachNumber**2-1)
+        #r = 82.296
+        #for i in range(0, len(self.__dSdX)):
+        #    self.__withemRef[i] = pi*sqrt(2*betta*r) * self.__dSdX[i]
 
 
     def getInputData(self):
@@ -59,15 +66,18 @@ class Aerodynamics:
         count = 1
         for line in file:
             list = line.split('\t')
+            #print(list)
             #if float(list[0]) < 0.0:
             #    continue
-            if float(list[0]) > 2.1:
+            if float(list[0]) > 3:
                 break
             ettaRef[count] = float(list[0])
             dSdX[count] = float(list[1])
             count += 1
         ettaRef[0] = ettaRef[1] - 0.5
         dSdX[0] = 0
+        print('etta_before', len(ettaRef))
+        print('dSdX_before', len(dSdX))
         return {'ettaRef': ettaRef, 'dSdX': dSdX}
 
     def getWithemRef(self):
@@ -92,16 +102,28 @@ class Aerodynamics:
         dx = (Xgeom)/(self.__Ngeom - 1)
         ettaRefResample = {}
         dSdXResample = {}
+        #c=0
         for j in range(0, self.__Ngeom):
             ettaRefResample[j] = ettaRef[0] + j*dx
         for i in range(0, len(dSdX)-1):
             for j in range(0, self.__Ngeom):
                 if (ettaRefResample[j]>=ettaRef[i] and ettaRefResample[j]<=ettaRef[i+1]):
                     dSdXResample[j] = Ka[i]*ettaRefResample[j] + Kb[i]
+                    #print('count', c,'min', ettaRef[i], 'max',ettaRef[i+1], '\tetta=', ettaRefResample[j], '\t', dSdXResample[j])
+                    #c+=1
+                #if ettaRefResample[j] == ettaRef[i+1]:
+                #    dSdXResample[j] = Ka[i] * ettaRefResample[j] + Kb[i]
+                #    print('count', c, 'min', ettaRef[i], 'max', ettaRef[i + 1], '\tetta=', ettaRefResample[j], '\t',
+                #          dSdXResample[j])
         #print(len(ettaRefResample))
         #print(len(dSdXResample))
         #for i in range(0, len(ettaRefResample)):
             #print('i', i, 'etta', ettaRefResample[i], 'ds_dx =', dSdXResample[i])
+
+        #print('etta_after', len(ettaRefResample))
+        #print('dSdX_after', len(dSdXResample))
+        #print('etta_final', ettaRef[len(dSdX)-1])
+        #print('etta_res_final', ettaRefResample[self.__Ngeom-1])
         return {'ettaRefResample': ettaRefResample, 'dSdXResample': dSdXResample}
 
 

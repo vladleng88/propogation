@@ -136,12 +136,13 @@ class Raytrace:
         windX = self.__atmosphere.getWindX(y0)
         windY = self.__atmosphere.getWindY(y0)
         windZ = self.__atmosphere.getWindZ(y0)
-        dVx = Vx - windX
-        dVy = Vy - windY
-        dVz = Vz - windZ
+        dVx = Vx + windX
+        dVy = Vy + windY
+        dVz = Vz + windZ
         V_new = sqrt(dVx ** 2 + dVy ** 2 + dVz ** 2)
         M = V_new / self.soundSpeed(T0)
-        return M
+        #return M
+        return self.__params.getMachNumber0()
 
     def getMyu(self):
         myu = degrees(asin(1 / self.getFlightMachNumber()))
@@ -276,10 +277,13 @@ class Raytrace:
 
     def getK2(self):
         a0 = self.soundSpeed(self.__atmosphere.getTemperature(self.__params.getY0()))
+        nox = self.getNox()
+        noz = self.getNoz()
         noy = self.getNoy()
         M = self.getFlightMachNumber()
         l = self.__params.getLength()
-        a_star = a0 + self.__atmosphere.getWindY(self.__params.getY0()) * noy
+        #a_star = a0 + self.__atmosphere.getWindY(self.__params.getY0()) * noy
+        a_star = a0 + self.__atmosphere.getWindY(self.__params.getY0()) * noy +  self.__atmosphere.getWindX(self.__params.getY0())*nox + self.__atmosphere.getWindZ(self.__params.getY0())*noz
         k2 = l/(M*a_star)
         return k2
     def getInitialIntagrals(self):
@@ -303,7 +307,8 @@ class Raytrace:
         I0['I4'] = I4_0
         return I0
 
-
+    def getTetta(self):
+        return self.__tetta
 
 
 

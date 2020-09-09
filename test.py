@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 atmosphere = Atmosphere()
 atmosphere.setAtmoshere()
 
-pathway = Pathway(atmosphere, 5000, 0, 0, 0, 1.2, 1.24, 25, 0, 0)
+pathway = Pathway(atmosphere, 5000, 0, 0, 0, 1.2, 1.4, 10, 0, 0)
 pathway.setStritelinePathway()
 
 #fig = plt.figure()
@@ -38,10 +38,10 @@ for i in tau:
     mach = pathway.getVelocity()[i] / pathway.soundSpeed(atmosphere.getTemperature(pathway.getY()[i]))
     y0 = pathway.getY()[i]
     x0 = pathway.getX()[i]
-    z0 = pathway.getZ()[i]
-    t0 = tau[i]
+    t0 = tau[i]= pathway.getX()[i]
+    z0 = pathway.getZ0()
     o = pathway.getOmega()
     o1 = pathway.getOmega1()
     param = Params(y0, x0, z0, t0, o, o1, mach)
-    print('i', i, 'x:',pathway.getX()[i], 'y:',pathway.getY()[i], 'z:',pathway.getZ()[i], 't:', tau[i], 'mach:',mach)
+    print('i', i, 'x:',pathway.getX()[i], 'y:',pathway.getY()[i], 'z:',pathway.getZ()[i], 't:', tau[i], 'mach:',mach, 'velocity=',pathway.getVelocity()[i] )
 

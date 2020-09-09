@@ -9,11 +9,11 @@ class Params:
                  omega=0,
                  omega1=0,
                  M0=1.7,
+                 y_target=0,
+                 lift=15000*9.81,# N
+                 length=30.346,#метров
                  kappa=1.4,
                  R=287.3,
-                 lift=15000*9.81,# N
-                 length=30.346, #метров
-                 y_target=0,
                  ispace=4000
                  ):
         self.__y0 = y0

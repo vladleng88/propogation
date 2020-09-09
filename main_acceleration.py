@@ -11,9 +11,9 @@ from lib.praphview import *
 atmosphere = Atmosphere()
 atmosphere.setAtmoshere()
 
-pathway = Pathway(atmosphere, 15500, 0, 0, 0, 1.2, 1.24, 25, 0, 0)
+pathway = Pathway(atmosphere, 15500, 0, 0, 0, 1.2, 1.4, 10, 0, 0)
 pathway.setStritelinePathway()
-
+fig, ax = plt.subplots()
 tauDict = pathway.getTime()
 for key in tauDict:
     print('------------------------------------------start raytrace at t=', tauDict[key],'----------------------------------------------')
@@ -21,11 +21,11 @@ for key in tauDict:
     print('-------y0=',pathway.getY()[key], 'x0=',pathway.getX()[key], 'z0=',pathway.getZ()[key], 't0=',tauDict[key], 'o0=',pathway.getOmega(), 'o1=',pathway.getOmega1(), 'M0=',mach)
     params = Params(pathway.getY()[key], pathway.getX()[key], pathway.getZ()[key], tauDict[key], pathway.getOmega(), pathway.getOmega1(), mach)
     a = {'ax': pathway.getAx()[key],'ay': pathway.getAy()[key], 'az': pathway.getAz()[key]}
-    raytrace = Raytrace(10, params, atmosphere, a, pathway.getDaDh()[key], pathway.getDVDh()[key])
+    raytrace = Raytrace(0, params, atmosphere, a, pathway.getDaDh()[key], pathway.getDVDh()[key])
     aerodynamics = Aerodynamics(params, raytrace.getFlightMachNumber())
-    coeff_normal = 0.5*atmosphere.getDensity(params.getY0())*(raytrace.getFlightMachNumber()**2)*\
-        (raytrace.soundSpeed(atmosphere.getTemperature(params.getY0())))**2*sqrt(params.getLength())/\
-        (sqrt((raytrace.getFlightMachNumber())**2 - 1)*params.getLift())
+    coeff_normal = 0.5*atmosphere.getDensity(params.getY0())*(raytrace.getFlightMachNumber()**2)* \
+                   (raytrace.soundSpeed(atmosphere.getTemperature(params.getY0())))**2*sqrt(params.getLength())/ \
+                   (sqrt((raytrace.getFlightMachNumber())**2 - 1)*params.getLift())
     #print(sqrt((raytrace.getFlightMachNumber())**2 - 1))
     print('coeff_normal=', coeff_normal)
     aerodynamics.setAerodynmamicsData(coeff_normal)
@@ -35,7 +35,7 @@ for key in tauDict:
     dSdX = aerodynamics.getdSdX()
     P_BANG = {}; T_BANG = {}
     FF_DOP = {}; T_DOP = {}
-    xx = []; yy = []; zz = []
+    xx = []; yy = []; zz = []; II=[]
     k = 0; k1 = 0; k2 = 0
     y_rev = 0
     y=params.getY0()
@@ -50,8 +50,9 @@ for key in tauDict:
     y_next = y+raytrace.getDy(y, ny)
     Integrals = raytrace.getInitialIntagrals()
     I1 = Integrals['I1']; I2 = Integrals['I2']; I3 = Integrals['I3']; I4 = Integrals['I4']
+    II.append(raytrace.getIntegral(I1, I2, I3))
     while y >= params.getYtarget() and y_next >= params.getYtarget():
-       # print('sds')
+        # print('sds')
         dy = raytrace.getDy(y, ny)
         y_rev = y_rev + dy
         y = params.getY0() + y_rev
@@ -85,6 +86,7 @@ for key in tauDict:
         I2 = I2 + Integrals['dI2']
         I3 = I3 + Integrals['dI3']
         I = raytrace.getIntegral(I1, I2, I3)
+        II.append(I)
         I4 = I4 + raytrace.getDIntegral4(y, ny, I, dy)
         #print('I4=', I4)
         k = raytrace.getK(I4)
@@ -95,11 +97,15 @@ for key in tauDict:
 
         #print('h=', y, ' k=', k, ' k1=', k1, ' k2=', k2, 'I1=', I1,'I2=', I2,'I3=', I3,'I4=', I4, 'I', I)
         #print('h=', y, ' k=', k, ' k1=', k1, ' k2=', k2, 'I1=', I1, 'ny', ny, 'a', raytrace.soundSpeed(atmosphere.getTemperature(y)), 'i1_test', i1_test)
+
+    #IntegralPlot(II, yy)
+    #print(II)
+    ax.plot(xx, yy, linewidth=1.0, color='red')
     print(' k=', k, ' k1=', k1, ' k2=', k2, 'I1=', I1,'I2=', I2,'I3=', I3,'I4=', I4, 'I', I, 'sigma', raytrace.getSigma(), 'gamma', raytrace.getGamma() )
 
     for j in range(0, len(withemRef)):
-       FF_DOP[j] = 2*potentialRef[j]/k - withemRef[j]**2
-       T_DOP[j] = ettaRef[j] - k*withemRef[j]
+        FF_DOP[j] = 2*potentialRef[j]/k - withemRef[j]**2
+        T_DOP[j] = ettaRef[j] - k*withemRef[j]
     #Take the minimum and maximum value of the duration
     T_MIN = T_DOP[0]
     T_MAX = T_DOP[0]
@@ -162,6 +168,8 @@ for key in tauDict:
         P_BOOM[j] = k1*F_wave[j]*2
         T_BOOM[j] = k2*(ttt[j])
         #print('j',j ,'\t', 'etta=', ettaRef[j], '\t','t=', T_BOOM[j], '\t','p=', P_BOOM[j])
-    graphPlot(ettaRef, dSdX, potentialRef, withemRef, T_BOOM, P_BOOM,  T_DOP, FF_DOP, ttt, FFF, tauDict[key])
+    #graphPlot(ettaRef, dSdX, potentialRef, withemRef, T_BOOM, P_BOOM,  T_DOP, FF_DOP, ttt, FFF, tauDict[key])
     #if key == 1:
-        #exit(1)
+        #break
+
+plt.show()
